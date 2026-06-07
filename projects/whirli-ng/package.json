@@ -1,0 +1,31 @@
+{
+  "name": "whirli-ng",
+  "version": "0.0.2",
+  "description": "A modern Angular carousel library with SSR-friendly layout, rich pagination, external controls, thumbs, virtual slides, and a complete playground.",
+  "keywords": [
+    "angular",
+    "carousel",
+    "slider",
+    "whirli",
+    "ssr",
+    "pagination",
+    "storybook"
+  ],
+  "homepage": "https://babbage42.github.io/whirli-ng/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/babbage42/whirli-ng.git"
+  },
+  "bugs": {
+    "url": "https://github.com/babbage42/whirli-ng/issues"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/common": "^20.3.10",
+    "@angular/core": "^20.3.10"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}

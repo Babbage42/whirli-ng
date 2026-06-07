@@ -1,0 +1,267 @@
+:host {
+  display: flex;
+  inline-size: 100%;
+  justify-content: var(--whirli-pagination-align, center);
+  position: var(--whirli-pagination-position, static);
+  inset-block-start: var(--whirli-pagination-top, auto);
+  inset-block-end: var(--whirli-pagination-bottom, auto);
+  inset-inline-start: var(--whirli-pagination-left, auto);
+  inset-inline-end: var(--whirli-pagination-right, auto);
+  z-index: var(--whirli-pagination-z-index, 1);
+  user-select: none;
+  margin: var(--whirli-pagination-margin, 0);
+  margin-bottom: var(--whirli-pagination-margin-bottom, 1rem);
+
+  &.vertical {
+    inline-size: auto;
+    align-items: center;
+    justify-content: var(--whirli-pagination-align, center);
+    margin-bottom: 0;
+  }
+}
+
+:host(.track-pagination) {
+  inline-size: var(--whirli-pagination-host-width, 100%);
+}
+
+:host(.track-pagination):not(.external-pagination) {
+  position: var(--whirli-pagination-position, absolute);
+  margin: var(--whirli-pagination-margin, 0);
+}
+
+:host(.track-position-top):not(.external-pagination),
+:host(.track-position-bottom):not(.external-pagination) {
+  inset-inline-start: var(--whirli-pagination-left, 0);
+  inset-inline-end: var(--whirli-pagination-right, 0);
+}
+
+:host(.track-position-top):not(.external-pagination) {
+  inset-block-start: var(--whirli-pagination-top, 0);
+  inset-block-end: var(--whirli-pagination-bottom, auto);
+}
+
+:host(.track-position-bottom):not(.external-pagination) {
+  inset-block-start: var(--whirli-pagination-top, auto);
+  inset-block-end: var(--whirli-pagination-bottom, 0);
+}
+
+:host(.track-position-left),
+:host(.track-position-right) {
+  inline-size: auto;
+  block-size: 100%;
+  align-items: stretch;
+}
+
+:host(.track-position-left):not(.external-pagination),
+:host(.track-position-right):not(.external-pagination) {
+  inset-block-start: var(--whirli-pagination-top, 0);
+  inset-block-end: var(--whirli-pagination-bottom, 0);
+}
+
+:host(.track-position-left):not(.external-pagination) {
+  inset-inline-start: var(--whirli-pagination-left, 0);
+  inset-inline-end: var(--whirli-pagination-right, auto);
+}
+
+:host(.track-position-right):not(.external-pagination) {
+  inset-inline-start: var(--whirli-pagination-left, auto);
+  inset-inline-end: var(--whirli-pagination-right, 0);
+}
+
+:host(.vertical) .dot-pagination.pagination-dot,
+:host(.vertical) .dot-pagination.dynamic {
+  flex-direction: column;
+}
+
+.dot-pagination {
+  &.clickable {
+    .dot {
+      cursor: pointer;
+    }
+  }
+
+  .dot {
+    appearance: none;
+    opacity: var(--whirli-pagination-dot-opacity, 0.5);
+    background-color: var(--whirli-pagination-dot-color, grey);
+    border: 0;
+    border-radius: var(--whirli-pagination-dot-radius, 50%);
+    padding: 0;
+
+    &.selected {
+      opacity: var(--whirli-pagination-dot-active-opacity, 1);
+      background-color: var(
+        --whirli-pagination-dot-active-color,
+        var(--whirli-pagination-color, var(--whirli-theme-color, darkblue))
+      );
+      transform: scale(var(--whirli-pagination-dot-active-scale, 1.5));
+    }
+  }
+
+  &.pagination-dot {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--whirli-pagination-gap, 1rem);
+    padding: var(--whirli-pagination-padding, 1rem);
+
+    .dot {
+      width: var(
+        --whirli-pagination-dot-width,
+        var(--whirli-pagination-dot-size, 0.5rem)
+      );
+      height: var(
+        --whirli-pagination-dot-height,
+        var(--whirli-pagination-dot-size, 0.5rem)
+      );
+    }
+
+    &.rtl {
+      flex-direction: row-reverse;
+    }
+  }
+
+  &.dynamic {
+    display: flex;
+    flex-direction: row;
+    gap: var(--whirli-pagination-gap, 1rem);
+    overflow: hidden;
+
+    .dot {
+      position: relative;
+      width: var(
+        --whirli-pagination-dot-width,
+        var(--whirli-pagination-dot-size, 0.5rem)
+      );
+      height: var(
+        --whirli-pagination-dot-height,
+        var(--whirli-pagination-dot-size, 0.5rem)
+      );
+      transition:
+        left var(--whirli-pagination-transition-duration, 0.2s),
+        top var(--whirli-pagination-transition-duration, 0.2s),
+        transform var(--whirli-pagination-transition-duration, 0.2s),
+        background-color var(--whirli-pagination-transition-duration, 0.2s),
+        opacity var(--whirli-pagination-transition-duration, 0.2s);
+      flex: 0 0 auto;
+      transform: scale(1);
+
+      &.next,
+      &.prev {
+        transform: scale(var(--whirli-pagination-dot-near-scale, 0.6));
+      }
+
+      &.next-next,
+      &.prev-prev {
+        transform: scale(var(--whirli-pagination-dot-far-scale, 0.4));
+      }
+    }
+  }
+}
+
+.pagination-fraction {
+  color: var(--whirli-pagination-fraction-color, inherit);
+  background: var(--whirli-pagination-fraction-background, transparent);
+  border: var(--whirli-pagination-fraction-border, none);
+  border-radius: var(--whirli-pagination-fraction-radius, 0);
+  padding: var(--whirli-pagination-fraction-padding, 0);
+  font-size: var(--whirli-pagination-fraction-font-size, inherit);
+  font-weight: var(--whirli-pagination-fraction-font-weight, inherit);
+}
+
+.pagination-progress {
+  position: relative;
+  overflow: hidden;
+  inline-size: var(--whirli-pagination-progress-width, 100%);
+  block-size: var(--whirli-pagination-progress-height, 0.25rem);
+  background: var(--whirli-pagination-progress-background, rgb(0 0 0 / 0.15));
+  border: var(--whirli-pagination-progress-border, none);
+  border-radius: var(--whirli-pagination-progress-radius, 999px);
+
+  span {
+    display: block;
+    inline-size: var(--whirli-pagination-progress-value, 0%);
+    block-size: 100%;
+    background: var(
+      --whirli-pagination-progress-color,
+      var(--whirli-pagination-color, var(--whirli-theme-color, darkblue))
+    );
+    border-radius: inherit;
+    transition: inline-size var(--whirli-pagination-transition-duration, 0.2s);
+  }
+}
+
+:host(.vertical) .pagination-progress,
+:host(.track-position-left) .pagination-progress,
+:host(.track-position-right) .pagination-progress {
+  inline-size: var(--whirli-pagination-progress-height, 0.25rem);
+  block-size: var(--whirli-pagination-progress-width, 100%);
+
+  span {
+    inline-size: 100%;
+    block-size: var(--whirli-pagination-progress-value, 0%);
+  }
+}
+
+.pagination-scrollbar {
+  position: relative;
+  overflow: hidden;
+  inline-size: var(--whirli-pagination-scrollbar-width, 100%);
+  block-size: var(--whirli-pagination-scrollbar-height, 0.375rem);
+  background: var(
+    --whirli-pagination-scrollbar-background,
+    rgb(0 0 0 / 0.15)
+  );
+  border: var(--whirli-pagination-scrollbar-border, none);
+  border-radius: var(--whirli-pagination-scrollbar-radius, 999px);
+  touch-action: none;
+
+  &.clickable {
+    cursor: pointer;
+  }
+
+  span {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: var(--whirli-pagination-scrollbar-thumb-offset, 0%);
+    display: block;
+    inline-size: var(--whirli-pagination-scrollbar-thumb-size, 100%);
+    block-size: 100%;
+    background: var(
+      --whirli-pagination-scrollbar-thumb-color,
+      var(--whirli-pagination-color, var(--whirli-theme-color, darkblue))
+    );
+    border: var(--whirli-pagination-scrollbar-thumb-border, none);
+    border-radius: var(--whirli-pagination-scrollbar-thumb-radius, inherit);
+    transition:
+      inset-inline-start var(--whirli-pagination-transition-duration, 0.2s),
+      inline-size var(--whirli-pagination-transition-duration, 0.2s);
+  }
+}
+
+:host(.vertical) .pagination-scrollbar,
+:host(.track-position-left) .pagination-scrollbar,
+:host(.track-position-right) .pagination-scrollbar {
+  inline-size: var(--whirli-pagination-scrollbar-height, 0.375rem);
+  block-size: var(--whirli-pagination-scrollbar-width, 100%);
+
+  span {
+    inset-block-start: var(--whirli-pagination-scrollbar-thumb-offset, 0%);
+    inset-inline-start: 0;
+    inline-size: 100%;
+    block-size: var(--whirli-pagination-scrollbar-thumb-size, 100%);
+    transition:
+      inset-block-start var(--whirli-pagination-transition-duration, 0.2s),
+      block-size var(--whirli-pagination-transition-duration, 0.2s);
+  }
+}
+
+:host-context(.carousel--rtl):not(.vertical):not(.track-position-left):not(
+    .track-position-right
+  )
+  .pagination-scrollbar
+  span {
+  inset-inline-start: auto;
+  inset-inline-end: var(--whirli-pagination-scrollbar-thumb-offset, 0%);
+}

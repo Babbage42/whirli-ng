@@ -1,0 +1,46 @@
+.controls {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  > button {
+    cursor: var(--whirli-nav-cursor, pointer);
+    z-index: var(--whirli-nav-z-index, 2);
+    position: absolute;
+
+    background: var(--whirli-nav-background, none);
+    color: var(--whirli-nav-color, var(--whirli-theme-color, inherit));
+    border: var(--whirli-nav-border, none);
+    border-radius: var(--whirli-nav-radius, 0);
+    padding: var(--whirli-nav-padding, 0);
+    font: inherit;
+    outline: inherit;
+
+    &:hover:not(:disabled) {
+      background: var(
+        --whirli-nav-background-hover,
+        var(--whirli-nav-background, none)
+      );
+      color: var(
+        --whirli-nav-color-hover,
+        var(--whirli-nav-color, var(--whirli-theme-color, inherit))
+      );
+    }
+
+    &:focus-visible {
+      outline: var(--whirli-focus-width, 2px) solid
+        var(--whirli-focus-color, var(--whirli-theme-color, #000));
+      outline-offset: var(--whirli-focus-offset, 2px);
+    }
+
+    &.control-hidden {
+      visibility: hidden;
+      pointer-events: none;
+      opacity: var(--whirli-nav-hidden-opacity, 1);
+    }
+  }
+  &.carousel--vertical {
+    svg.default-icon {
+      rotate: 90deg;
+    }
+  }
+}

@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+.app-nav {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #0b0d12;
+  border-bottom: 1px solid #2a3142;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 13px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  a {
+    color: #8a91a4;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 5px;
+    transition: background 0.15s;
+
+    &:hover {
+      color: #e6e8ef;
+      background: #1d2230;
+    }
+
+    &.active {
+      color: #e6e8ef;
+      background: #6366f1;
+    }
+  }
+}

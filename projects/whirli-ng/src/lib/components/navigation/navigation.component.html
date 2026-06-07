@@ -1,0 +1,68 @@
+<ng-template #leftControl>
+  <button
+    [attr.tabindex]="leftControlVisible() ? 0 : -1"
+    [attr.aria-label]="previousSlideLabel()"
+    [attr.aria-hidden]="leftControlVisible() ? null : true"
+    [class.control-hidden]="!leftControlVisible()"
+    [disabled]="!leftControlVisible()"
+    [style.left]="leftLeftControl()"
+    [style.top]="topLeftControl()"
+    class="control-left"
+    (click)="slideToPrev()"
+  >
+    @if (customLeftArrow()) {
+      <ng-container *ngTemplateOutlet="customLeftArrow()"></ng-container>
+    } @else {
+      <svg
+        class="default-icon"
+        [attr.width]="iconSize() || '24'"
+        [attr.height]="iconSize() || '24'"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+          fill="currentColor"
+        ></path>
+      </svg>
+    }
+  </button>
+</ng-template>
+
+<ng-template #rightControl>
+  <button
+    [attr.tabindex]="rightControlVisible() ? 0 : -1"
+    [attr.aria-label]="nextSlideLabel()"
+    [attr.aria-hidden]="rightControlVisible() ? null : true"
+    [class.control-hidden]="!rightControlVisible()"
+    [disabled]="!rightControlVisible()"
+    [style.right]="rightRightControl()"
+    [style.top]="topRightControl()"
+    class="control-right"
+    (click)="slideToNext()"
+  >
+    @if (customRightArrow()) {
+      <ng-container *ngTemplateOutlet="customRightArrow()"></ng-container>
+    } @else {
+      <svg
+        class="default-icon"
+        [attr.width]="iconSize() || '24'"
+        [attr.height]="iconSize() || '24'"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"
+          fill="currentColor"
+        ></path>
+      </svg>
+    }
+  </button>
+</ng-template>
+
+<div class="controls" [class.carousel--vertical]="store.isVertical()">
+  @if (!carouselRegistry.hasExternalControls()) {
+    <ng-container *ngTemplateOutlet="leftControl"></ng-container>
+    <ng-container *ngTemplateOutlet="rightControl"></ng-container>
+  }
+</div>

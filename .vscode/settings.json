@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "jest.nodeEnv": {
+    "PATH": "/Users/babbage/.nvm/versions/node/v24.11.0/bin/"
+  }
+}

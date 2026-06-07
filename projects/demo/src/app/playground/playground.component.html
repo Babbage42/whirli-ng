@@ -1,0 +1,2354 @@
+<div class="pg-shell" [class.pg-shell--didactic]="state().visualDebug">
+  <header class="pg-top">
+    <div class="pg-top-title">
+      <span class="pg-eyebrow">Carousel lab</span>
+      <h1>Playground</h1>
+      <span>{{ experienceModeLabel() }}</span>
+    </div>
+
+    <div class="pg-top-actions" aria-label="Playground toolbar">
+      <label class="pg-command pg-command--preset">
+        <span>Preset</span>
+        <select
+          #presetSelect
+          (change)="applyPreset(+presetSelect.value); presetSelect.value = ''"
+        >
+          <option value="" disabled selected>Load scenario</option>
+          @for (group of presetGroups(); track group.category) {
+            <optgroup [label]="group.category">
+              @for (item of group.presets; track item.preset.name) {
+                <option [value]="item.index">
+                  {{ item.preset.name }} - {{ item.preset.description }}
+                </option>
+              }
+            </optgroup>
+          }
+        </select>
+      </label>
+
+      <div class="pg-command">
+        <span>Mode</span>
+        <div class="pg-segment" aria-label="Playground workspace mode">
+          <button
+            [class.active]="experienceMode() === 'base'"
+            (click)="setExperienceMode('base')"
+          >
+            Workshop
+          </button>
+          <button
+            [class.active]="experienceMode() === 'didactic'"
+            (click)="setExperienceMode('didactic')"
+          >
+            Didactic
+          </button>
+        </div>
+      </div>
+
+      <div class="pg-command">
+        <span>Viewport</span>
+        <div class="pg-segment" aria-label="Viewport preview">
+          <button
+            [class.active]="state().viewportMode === 'full'"
+            (click)="patch('viewportMode', 'full')"
+          >
+            Full
+          </button>
+          <button
+            [class.active]="state().viewportMode === 'mobile'"
+            (click)="patch('viewportMode', 'mobile')"
+          >
+            Phone
+          </button>
+          <button
+            [class.active]="state().viewportMode === 'tablet'"
+            (click)="patch('viewportMode', 'tablet')"
+          >
+            Tablet
+          </button>
+          <button
+            [class.active]="state().viewportMode === 'desktop'"
+            (click)="patch('viewportMode', 'desktop')"
+          >
+            Desktop
+          </button>
+        </div>
+      </div>
+
+      <div class="pg-command pg-command--tools">
+        <span>Actions</span>
+        <div class="pg-top-tools">
+          <button
+            (click)="randomizeImages()"
+            title="Refresh slide image examples"
+          >
+            Refresh images
+          </button>
+          <button
+            (click)="resetCarousel()"
+            title="Destroy and re-create the carousel"
+          >
+            Remount
+          </button>
+          <button (click)="resetAll()" title="Reset all to defaults">
+            Reset
+          </button>
+          <button
+            type="button"
+            [class.active]="didacticCodeVisible()"
+            (click)="didacticCodeVisible.set(true)"
+            title="Show generated Angular code"
+          >
+            Code
+          </button>
+          <button (click)="copyShareLink()" title="Copy shareable URL">
+            {{ shareCopied() ? "URL copied" : "Copy URL" }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════ MAIN ════════════════════ -->
+  <div class="pg-main">
+    <!-- ── LEFT: live carousel ── -->
+    <section class="pg-stage">
+      <div class="pg-stage-header">
+        <div>
+          <span class="pg-eyebrow">Live preview</span>
+          <strong>
+            {{ state().slideCount }} slides · {{ state().slidesPerView }} per
+            view · {{ state().contentMode }}
+          </strong>
+        </div>
+        <div class="pg-stage-actions">
+          <label>
+            controlledSlideTo
+            <input
+              type="number"
+              [ngModel]="controlledSlideToValue()"
+              (ngModelChange)="controlledSlideToValue.set($event)"
+              min="0"
+              [max]="state().slideCount - 1"
+              placeholder="index"
+            />
+          </label>
+          <button
+            (click)="applyForceSlideTo()"
+            [disabled]="controlledSlideToValue() === undefined"
+          >
+            Go
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="pg-carousel-host"
+        [class.vertical]="state().axis === 'vertical'"
+        [class.debug]="state().visualDebug"
+        [class.pg-carousel-host--mobile]="state().viewportMode === 'mobile'"
+        [class.pg-carousel-host--tablet]="state().viewportMode === 'tablet'"
+        [class.pg-carousel-host--desktop]="state().viewportMode === 'desktop'"
+        [style.--whirli-theme-color]="state().themeColor"
+        [style.--whirli-overflow]="state().carouselOverflow"
+        [style.--whirli-gap-to-pagination]="state().carouselGapToPagination + 'px'"
+        [style.--whirli-slide-cursor]="state().slideCursor"
+        [style.--whirli-slide-disabled-opacity]="state().slideDisabledOpacity"
+        [style.--whirli-nav-inline-offset]="state().navInlineOffset + 'px'"
+        [style.--whirli-nav-block-offset]="state().navBlockOffset + 'px'"
+        [style.--whirli-nav-color]="state().navColor"
+        [style.--whirli-nav-color-hover]="state().navColorHover"
+        [style.--whirli-nav-background]="state().navBackground"
+        [style.--whirli-nav-background-hover]="state().navBackgroundHover"
+        [style.--whirli-nav-border]="state().navBorder"
+        [style.--whirli-nav-radius]="state().navRadius + 'px'"
+        [style.--whirli-nav-padding]="state().navPadding + 'px'"
+        [style.--whirli-nav-cursor]="state().navCursor"
+        [style.--whirli-nav-hidden-opacity]="state().navHiddenOpacity"
+        [style.--whirli-nav-z-index]="state().navZIndex"
+        [style.--whirli-focus-color]="state().focusColor"
+        [style.--whirli-focus-width]="state().focusWidth + 'px'"
+        [style.--whirli-focus-offset]="state().focusOffset + 'px'"
+        [style.--whirli-pagination-margin-bottom]="state().paginationMarginBottom"
+        [style.--whirli-pagination-color]="state().paginationColor"
+        [style.--whirli-pagination-gap]="state().paginationGap + 'px'"
+        [style.--whirli-pagination-padding]="state().paginationPadding + 'px'"
+        [style.--whirli-pagination-dot-size]="state().paginationDotSize + 'px'"
+        [style.--whirli-pagination-dot-width]="state().paginationDotWidth + 'px'"
+        [style.--whirli-pagination-dot-height]="state().paginationDotHeight + 'px'"
+        [style.--whirli-pagination-dot-radius]="state().paginationDotRadius + 'px'"
+        [style.--whirli-pagination-dot-color]="state().paginationDotColor"
+        [style.--whirli-pagination-dot-active-color]="state().paginationDotActiveColor"
+        [style.--whirli-pagination-dot-opacity]="state().paginationDotOpacity"
+        [style.--whirli-pagination-dot-active-opacity]="state().paginationDotActiveOpacity"
+        [style.--whirli-pagination-dot-active-scale]="state().paginationDotActiveScale"
+        [style.--whirli-pagination-dot-near-scale]="state().paginationDotNearScale"
+        [style.--whirli-pagination-dot-far-scale]="state().paginationDotFarScale"
+        [style.--whirli-pagination-transition-duration]="state().paginationTransitionDuration + 'ms'"
+        [style.--whirli-pagination-fraction-color]="state().paginationFractionColor"
+        [style.--whirli-pagination-fraction-background]="state().paginationFractionBackground"
+        [style.--whirli-pagination-fraction-border]="state().paginationFractionBorder"
+        [style.--whirli-pagination-fraction-radius]="state().paginationFractionRadius + 'px'"
+        [style.--whirli-pagination-fraction-padding]="state().paginationFractionPadding + 'px'"
+        [style.--whirli-pagination-fraction-font-size]="state().paginationFractionFontSize + 'px'"
+        [style.--whirli-pagination-fraction-font-weight]="state().paginationFractionFontWeight"
+        [style.--whirli-pagination-progress-width]="state().paginationProgressWidth"
+        [style.--whirli-pagination-progress-height]="state().paginationProgressHeight + 'px'"
+        [style.--whirli-pagination-progress-color]="state().paginationProgressColor"
+        [style.--whirli-pagination-progress-background]="state().paginationProgressBackground"
+        [style.--whirli-pagination-progress-border]="state().paginationProgressBorder"
+        [style.--whirli-pagination-progress-radius]="state().paginationProgressRadius + 'px'"
+        [style.--whirli-pagination-host-width]="state().paginationHostWidth"
+        [style.--whirli-pagination-scrollbar-width]="state().paginationScrollbarWidth"
+        [style.--whirli-pagination-scrollbar-height]="state().paginationScrollbarHeight + 'px'"
+        [style.--whirli-pagination-scrollbar-background]="state().paginationScrollbarBackground"
+        [style.--whirli-pagination-scrollbar-border]="state().paginationScrollbarBorder"
+        [style.--whirli-pagination-scrollbar-radius]="state().paginationScrollbarRadius + 'px'"
+        [style.--whirli-pagination-scrollbar-thumb-color]="state().paginationScrollbarThumbColor"
+        [style.--whirli-pagination-scrollbar-thumb-border]="state().paginationScrollbarThumbBorder"
+        [style.--whirli-pagination-scrollbar-thumb-radius]="state().paginationScrollbarThumbRadius + 'px'"
+        [style.--whirli-pagination-position]="
+          state().paginationPosition === 'default'
+            ? null
+            : state().paginationPosition
+        "
+        [style.--whirli-pagination-top]="state().paginationTop || null"
+        [style.--whirli-pagination-right]="state().paginationRight || null"
+        [style.--whirli-pagination-bottom]="state().paginationBottom || null"
+        [style.--whirli-pagination-left]="state().paginationLeft || null"
+        [style.--whirli-pagination-margin]="state().paginationMargin"
+        [style.--whirli-pagination-align]="state().paginationAlign"
+        [style.--whirli-pagination-z-index]="state().paginationZIndex"
+        [style.--whirli-thumb-indicator-height]="state().thumbIndicatorHeight + 'px'"
+        [style.--whirli-thumb-indicator-radius]="state().thumbIndicatorRadius + 'px'"
+        [style.--whirli-thumb-indicator-color]="state().thumbIndicatorColor"
+        [style.--whirli-thumb-indicator-bottom]="state().thumbIndicatorBottom + 'px'"
+        [style.--whirli-thumb-indicator-z-index]="state().thumbIndicatorZIndex"
+      >
+        <!-- Visual overlay materialising marginStart / marginEnd bands.
+             Purely cosmetic — does NOT affect carousel logic. -->
+        @if (state().marginStart > 0) {
+          <div
+            class="pg-margin-band pg-margin-band--start"
+            [style.--band-size.px]="state().marginStart"
+            title="marginStart = {{ state().marginStart }}px"
+          ></div>
+        }
+        @if (state().marginEnd > 0) {
+          <div
+            class="pg-margin-band pg-margin-band--end"
+            [style.--band-size.px]="state().marginEnd"
+            title="marginEnd = {{ state().marginEnd }}px"
+          ></div>
+        }
+
+        @if (state().visualDebug) {
+          <div
+            class="pg-index-overlay"
+            [class.pg-index-overlay--vertical]="state().axis === 'vertical'"
+            aria-hidden="true"
+          >
+            @for (marker of indexMarkers(); track marker.kind) {
+              <div
+                class="pg-index-marker"
+                [class.pg-index-marker--current]="marker.kind === 'current'"
+                [class.pg-index-marker--real]="marker.kind === 'real'"
+                [class.pg-index-marker--perceived]="marker.kind === 'perceived'"
+                [class.pg-index-marker--sticky-start]="
+                  marker.sticky === 'start'
+                "
+                [class.pg-index-marker--sticky-end]="marker.sticky === 'end'"
+                [style.--marker-offset.px]="marker.offsetPx"
+                [style.--marker-lane]="marker.lane"
+              >
+                <span>{{ marker.label }} {{ marker.value }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        @if (state().visualDebug) {
+          <div
+            class="pg-slide-badges"
+            [class.pg-slide-badges--vertical]="state().axis === 'vertical'"
+            aria-hidden="true"
+          >
+            @for (badge of slideBadges(); track badge.logicalIndex) {
+              <span
+                [style.--badge-offset.px]="badge.offsetPx"
+                [class.pg-slide-badge--active]="badge.active"
+                [class.pg-slide-badge--anchor]="!!badge.anchor"
+              >
+                #{{ badge.logicalIndex }}
+                @if (badge.anchor) {
+                  <small>{{ badge.anchor }} anchor</small>
+                }
+              </span>
+            }
+          </div>
+        }
+
+        @if (carouselVisible()) {
+          <whirli-carousel
+            #master
+            [slides]="state().contentMode === 'projected' ? [] : slides()"
+            [slidesPerView]="state().slidesPerView"
+            [stepSlides]="state().stepSlides"
+            [spaceBetween]="state().spaceBetween"
+            [marginStart]="state().marginStart"
+            [marginEnd]="state().marginEnd"
+            [peekEdges]="peekEdgesValue()"
+            [showControls]="state().showControls || state().navigationExternal"
+            [alwaysShowControls]="state().alwaysShowControls"
+            [iconSize]="state().iconSize"
+            [pagination]="paginationValue()"
+            [loop]="state().loop"
+            [rewind]="state().rewind"
+            [center]="state().center"
+            [notCenterBounds]="state().notCenterBounds"
+            [centerWhenNotEnoughSlides]="state().centerWhenNotEnoughSlides"
+            [freeMode]="state().freeMode"
+            [virtual]="state().virtual"
+            [virtualBuffer]="state().virtualBuffer"
+            [resistance]="state().resistance"
+            [direction]="state().direction"
+            [axis]="state().axis"
+            [draggable]="state().draggable"
+            [canSwipe]="state().canSwipe"
+            [slideOnClick]="state().slideOnClick"
+            [dragThresholdRatio]="state().dragThresholdRatio"
+            [dragIgnoreSelector]="state().dragIgnoreSelector"
+            [mouseWheel]="mouseWheelValue()"
+            [keyboardNavigation]="state().keyboardNavigation"
+            [navigateSlideBySlide]="state().navigateSlideBySlide"
+            [initialSlide]="state().initialSlide"
+            [autoplay]="autoplayValue()"
+            [lazyLoading]="state().lazyLoading"
+            [breakpoints]="breakpointsValue()"
+            [debug]="state().debug"
+            [controlledSlideTo]="controlledSlideToValue()"
+            (activeIndexChange)="onEvent('activeIndexChange', $event)"
+            (slideNext)="onEvent('slideNext')"
+            (slidePrev)="onEvent('slidePrev')"
+            (perceivedIndexChange)="onEvent('perceivedIndexChange', $event)"
+            (afterInit)="onEvent('afterInit')"
+            (beforeDestroy)="onEvent('beforeDestroy')"
+            (touched)="onEvent('touched')"
+            (touchStart)="onEvent('touchStart')"
+            (dragStart)="onEvent('dragStart')"
+            (dragEnd)="onEvent('dragEnd')"
+            (translateChange)="onEvent('translateChange', $event)"
+            (reachEnd)="onEvent('reachEnd')"
+            (reachStart)="onEvent('reachStart')"
+            (transitionStart)="onEvent('transitionStart')"
+            (transitionEnd)="onEvent('transitionEnd')"
+            (progress)="onEvent('progress', $event)"
+            (slideClick)="onEvent('slideClick', $event.index)"
+            (autoplayStart)="onEvent('autoplayStart')"
+            (autoplayStop)="onEvent('autoplayStop')"
+            (autoplayPause)="onEvent('autoplayPause')"
+            (imagesLoaded)="onEvent('imagesLoaded')"
+          >
+            @if (state().contentMode === "projected") {
+              @for (i of slideIndexes(); track i) {
+                <article
+                  *slide
+                  class="pg-projected-card"
+                  [class.pg-projected-card--featured]="i % 4 === 0"
+                >
+                  <img [src]="projectedImageSrc(i)" alt="" />
+                  <div class="pg-projected-card__body">
+                    <span class="pg-projected-card__kicker"
+                      >Projected {{ i + 1 }}</span
+                    >
+                    <strong>{{
+                      i % 2 === 0 ? "Custom content" : "Interactive slide"
+                    }}</strong>
+                    <p>
+                      {{
+                        i % 3 === 0
+                          ? "Button children should stay clickable, but drag must not fire a click."
+                          : "Template-driven slide body with its own layout."
+                      }}
+                    </p>
+                    @if (i % 3 === 0) {
+                      <button
+                        type="button"
+                        (click)="onProjectedAction($event, i)"
+                      >
+                        Action {{ i + 1 }}
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            }
+          </whirli-carousel>
+
+          @if (state().navigationExternal) {
+            <div
+              class="pg-external-navigation"
+              data-testid="external-navigation"
+            >
+              <span>External navigation</span>
+              <div class="pg-external-navigation__controls">
+                <whirli-navigation-prev
+                  [for]="master"
+                ></whirli-navigation-prev>
+                <whirli-navigation-next
+                  [for]="master"
+                ></whirli-navigation-next>
+              </div>
+            </div>
+          }
+
+          @if (state().paginationExternal && paginationValue()) {
+            <div class="pg-external-pagination">
+              <span>External pagination</span>
+              <whirli-pagination [for]="master"></whirli-pagination>
+            </div>
+          }
+
+          @if (state().thumbsEnabled) {
+            <div class="pg-thumbs-host">
+              <whirli-carousel
+                [slides]="slides()"
+                [slidesPerView]="state().thumbsSlidesPerView"
+                [spaceBetween]="state().thumbsSpaceBetween"
+                [thumbsFor]="master"
+                [thumbsOptions]="thumbsOptionsValue()"
+                [pagination]="undefined"
+                [showControls]="true"
+                [slideOnClick]="true"
+                [debug]="state().debug"
+              ></whirli-carousel>
+            </div>
+          }
+        }
+      </div>
+
+      @if (state().visualDebug) {
+        <section
+          class="pg-didactic-livebar"
+          aria-label="Live didactic carousel state"
+        >
+          <div class="pg-didactic-map">
+            <div class="pg-didactic-strip">
+              <strong>Translate range</strong>
+              <span>snap ticks + current translate cursor</span>
+            </div>
+            <div class="pg-snap-map" aria-hidden="true">
+              <span class="pg-snap-map__label pg-snap-map__label--start"
+                >min</span
+              >
+              <span class="pg-snap-map__track"></span>
+              <span
+                class="pg-snap-map__cursor"
+                [style.--cursor-ratio]="snapMapCursor().offsetPercent / 100"
+              ></span>
+              @for (snap of snapMapItems(); track snap.id) {
+                <span
+                  class="pg-snap-map__point"
+                  [class.active]="snap.active"
+                  [class.pg-snap-map__point--anchor]="!!snap.anchor"
+                  [style.--snap-ratio]="snap.offsetPercent / 100"
+                  [title]="'snap ' + snap.logicalIndex"
+                ></span>
+              }
+              <span class="pg-snap-map__label pg-snap-map__label--end"
+                >max</span
+              >
+            </div>
+          </div>
+          <div
+            class="pg-didactic-mechanics"
+            aria-label="Current didactic mechanics"
+          >
+            @for (item of didacticMechanics(); track item.title) {
+              <article>
+                <span>{{ item.title }}</span>
+                <strong>{{ item.value }}</strong>
+                <p>{{ item.body }}</p>
+              </article>
+            }
+          </div>
+        </section>
+      }
+
+      @if (!state().visualDebug) {
+        <div
+          class="pg-compact-insights"
+          aria-label="Carousel runtime summary"
+        >
+          @for (item of compactInsights(); track item.label) {
+            <span
+              [class.pg-compact-insight--ok]="item.tone === 'ok'"
+              [class.pg-compact-insight--warn]="item.tone === 'warn'"
+              [title]="item.detail"
+            >
+              <strong>{{ item.label }}</strong>
+              {{ item.value }}
+            </span>
+          }
+        </div>
+      }
+
+      @if (state().contentMode === "projected") {
+        <span class="pg-tool-chip"
+          >Projected actions: {{ projectedActionCount() }}</span
+        >
+      }
+
+      @if (state().visualDebug) {
+        <section class="pg-didactic-workbench">
+          <div class="pg-didactic-workbench__hero">
+            <div>
+              <span class="pg-eyebrow">Didactic mode</span>
+              <strong>{{ activeLesson().title }}</strong>
+              <p>{{ activeLesson().body }}</p>
+            </div>
+            <span class="pg-lesson-focus">{{ activeLesson().focus }}</span>
+            <div class="pg-didactic-actions">
+              <strong>Jump to</strong>
+              <button type="button" (click)="goToDidacticIndex('firstAnchor')">
+                first anchor
+              </button>
+              <button type="button" (click)="goToDidacticIndex('lastAnchor')">
+                last anchor
+              </button>
+              <button type="button" (click)="goToDidacticIndex('lastSlide')">
+                last slide
+              </button>
+              <button type="button" (click)="didacticCodeVisible.set(true)">
+                code for this state
+              </button>
+            </div>
+          </div>
+
+          <div class="pg-didactic-layout">
+            <div class="pg-didactic-main">
+              <div class="pg-didactic-events">
+                <div class="pg-didactic-events__head">
+                  <div class="pg-didactic-events__title">
+                    <strong>Event coach</strong>
+                    <span>· newest first</span>
+                  </div>
+                  <button type="button" (click)="resetEvents()">Clear</button>
+                </div>
+                <div class="pg-didactic-events__list">
+                  @if (didacticEvents().length) {
+                    @for (
+                      event of didacticEvents();
+                      track event.id;
+                      let step = $index
+                    ) {
+                      <article
+                        [style.--event-color]="categoryColor[event.category]"
+                      >
+                        <small>{{ step + 1 }}</small>
+                        <b>{{ event.name }}</b>
+                        @if (event.value) {
+                          <code>{{ event.value }}</code>
+                        } @else {
+                          <span aria-hidden="true"></span>
+                        }
+                        <p>{{ event.detail }}</p>
+                      </article>
+                    }
+                  } @else {
+                    <span class="pg-didactic-events__empty">
+                      Interact with the carousel to see the event sequence
+                      explained here.
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <div class="pg-decision-trace">
+                <div class="pg-decision-trace__head">
+                  <strong>Decision trace</strong>
+                  <span>why the carousel behaves like this now</span>
+                </div>
+                @for (item of decisionTrace(); track item.label) {
+                  <article>
+                    <div>
+                      <strong>{{ item.label }}</strong>
+                      <code>{{ item.value }}</code>
+                    </div>
+                    <p>{{ item.reason }}</p>
+                  </article>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+      }
+    </section>
+
+    <!-- ── RIGHT: compact inspector ── -->
+    <aside class="pg-panel" [class.pg-panel--didactic]="state().visualDebug">
+      <nav class="pg-tabs">
+        <button
+          [class.active]="tab() === 'controls'"
+          (click)="setTab('controls')"
+        >
+          Controls
+        </button>
+        <button [class.active]="tab() === 'css'" (click)="setTab('css')">
+          CSS
+        </button>
+        <button [class.active]="tab() === 'events'" (click)="setTab('events')">
+          {{ state().visualDebug ? "Raw events" : "Events" }}
+          <span class="pg-badge">{{ events().length }}</span>
+        </button>
+        <button [class.active]="tab() === 'state'" (click)="setTab('state')">
+          State
+        </button>
+      </nav>
+
+      <!-- ────────────── CONTROLS TAB ────────────── -->
+      @if (tab() === "controls") {
+        <div class="pg-controls">
+          <!-- LAYOUT -->
+          <details open>
+            <summary>Layout & sizing</summary>
+            <div class="pg-row">
+              <label
+                >Slide count
+                <input
+                  type="number"
+                  min="1"
+                  max="500"
+                  [ngModel]="state().slideCount"
+                  (ngModelChange)="patch('slideCount', +$event)"
+                />
+              </label>
+              <label
+                >slidesPerView
+                <input
+                  type="text"
+                  [ngModel]="state().slidesPerView"
+                  (ngModelChange)="
+                    patch('slidesPerView', $event === 'auto' ? 'auto' : +$event)
+                  "
+                />
+                <small
+                  >Number = fixed columns. "auto" uses each slide's real
+                  width.</small
+                >
+              </label>
+            </div>
+            <div class="pg-row">
+              <label
+                >spaceBetween (px)
+                <input
+                  type="number"
+                  min="0"
+                  [ngModel]="state().spaceBetween"
+                  (ngModelChange)="patch('spaceBetween', +$event)"
+                />
+              </label>
+              <label
+                >iconSize (px)
+                <input
+                  type="number"
+                  min="10"
+                  max="200"
+                  [ngModel]="state().iconSize"
+                  (ngModelChange)="patch('iconSize', +$event)"
+                />
+              </label>
+            </div>
+            <div class="pg-row">
+              <label
+                >marginStart
+                <input
+                  type="number"
+                  [ngModel]="state().marginStart"
+                  (ngModelChange)="patch('marginStart', +$event)"
+                />
+              </label>
+              <label
+                >marginEnd
+                <input
+                  type="number"
+                  [ngModel]="state().marginEnd"
+                  (ngModelChange)="patch('marginEnd', +$event)"
+                />
+                <small>Extra scrollable space after the last slide.</small>
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().variableWidths"
+                  (ngModelChange)="patch('variableWidths', $event)"
+                />
+                Variable slide widths
+              </label>
+            </div>
+            <div class="pg-row">
+              <label
+                >peekEdges mode
+                <select
+                  [ngModel]="state().peekEdgesMode"
+                  (ngModelChange)="patch('peekEdgesMode', $event)"
+                >
+                  <option
+                    value="none"
+                    [attr.selected]="
+                      state().peekEdgesMode === 'none' ? '' : null
+                    "
+                  >
+                    none
+                  </option>
+                  <option
+                    value="absolute"
+                    [attr.selected]="
+                      state().peekEdgesMode === 'absolute' ? '' : null
+                    "
+                  >
+                    absolute (px)
+                  </option>
+                  <option
+                    value="relative"
+                    [attr.selected]="
+                      state().peekEdgesMode === 'relative' ? '' : null
+                    "
+                  >
+                    relative (0-1)
+                  </option>
+                </select>
+                <small>Shows neighbours while keeping start/end flush.</small>
+              </label>
+              @if (state().peekEdgesMode === "absolute") {
+                <label
+                  >absolute (px)
+                  <input
+                    type="number"
+                    min="0"
+                    [ngModel]="state().peekEdgesAbsolute"
+                    (ngModelChange)="patch('peekEdgesAbsolute', +$event)"
+                  />
+                </label>
+              } @else if (state().peekEdgesMode === "relative") {
+                <label
+                  >relative (0-1)
+                  <input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    [ngModel]="state().peekEdgesRelative"
+                    (ngModelChange)="patch('peekEdgesRelative', +$event)"
+                  />
+                </label>
+              }
+            </div>
+          </details>
+
+          <!-- NAVIGATION -->
+          <details open>
+            <summary>Navigation</summary>
+            <div class="pg-row">
+              <label
+                >stepSlides
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="state().stepSlides"
+                  (ngModelChange)="patch('stepSlides', +$event)"
+                />
+                <small
+                  >Navigation step size, not always the final visual
+                  focus.</small
+                >
+              </label>
+              <label
+                >initialSlide
+                <input
+                  type="number"
+                  min="0"
+                  [ngModel]="state().initialSlide"
+                  (ngModelChange)="patch('initialSlide', +$event)"
+                />
+                <small
+                  >Requested startup index, clamped to valid anchors.</small
+                >
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().showControls"
+                  (ngModelChange)="patch('showControls', $event)"
+                />
+                showControls
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().navigationExternal"
+                  (ngModelChange)="patch('navigationExternal', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  external navigation
+                  <small
+                    >Renders standalone nav components linked to this
+                    carousel.</small
+                  >
+                </span>
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().alwaysShowControls"
+                  (ngModelChange)="patch('alwaysShowControls', $event)"
+                />
+                alwaysShowControls
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().keyboardNavigation"
+                  (ngModelChange)="patch('keyboardNavigation', $event)"
+                />
+                keyboard
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().navigateSlideBySlide"
+                  (ngModelChange)="patch('navigateSlideBySlide', $event)"
+                />
+                slide-by-slide
+              </label>
+            </div>
+          </details>
+
+          <!-- SCROLL BEHAVIOR -->
+          <details open>
+            <summary>Scroll behavior</summary>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().loop"
+                  (ngModelChange)="patch('loop', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  loop
+                  <small>Logical indexes can differ from DOM order.</small>
+                </span>
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().rewind"
+                  (ngModelChange)="patch('rewind', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  rewind
+                  <small>Jumps from the last anchor back to the first.</small>
+                </span>
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().freeMode"
+                  (ngModelChange)="patch('freeMode', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  freeMode
+                  <small
+                    >Settles between snaps; perceived index becomes key.</small
+                  >
+                </span>
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().resistance"
+                  (ngModelChange)="patch('resistance', $event)"
+                />
+                resistance
+              </label>
+            </div>
+          </details>
+
+          <!-- ALIGNMENT -->
+          <details>
+            <summary>Alignment</summary>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().center"
+                  (ngModelChange)="patch('center', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  center
+                  <small
+                    >Aligns the active slide with the viewport center.</small
+                  >
+                </span>
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().notCenterBounds"
+                  (ngModelChange)="patch('notCenterBounds', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  bounded center
+                  <small
+                    >Keeps centered mode from overscrolling at edges.</small
+                  >
+                </span>
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().centerWhenNotEnoughSlides"
+                  (ngModelChange)="patch('centerWhenNotEnoughSlides', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  centerWhenNotEnoughSlides
+                  <small>Force centering when too few slides.</small>
+                </span>
+              </label>
+            </div>
+          </details>
+
+          <!-- VIRTUALIZATION -->
+          <details>
+            <summary>Virtualization</summary>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().virtual"
+                  (ngModelChange)="patch('virtual', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  virtual
+                  <small
+                    >Limits rendered DOM slides while keeping all slides
+                    navigable.</small
+                  >
+                </span>
+              </label>
+              <label
+                >virtualBuffer
+                <input
+                  type="number"
+                  min="0"
+                  [ngModel]="state().virtualBuffer"
+                  (ngModelChange)="patch('virtualBuffer', +$event)"
+                />
+                <small>Extra rendered slides around the visible window.</small>
+              </label>
+            </div>
+          </details>
+
+          <!-- DIRECTION -->
+          <details open>
+            <summary>Direction & axis</summary>
+            <div class="pg-row">
+              <label
+                >direction
+                <select
+                  [ngModel]="state().direction"
+                  (ngModelChange)="patch('direction', $event)"
+                >
+                  <option value="ltr">ltr</option>
+                  <option value="rtl">rtl</option>
+                </select>
+              </label>
+              <label
+                >axis
+                <select
+                  [ngModel]="state().axis"
+                  (ngModelChange)="patch('axis', $event)"
+                >
+                  <option value="horizontal">horizontal</option>
+                  <option value="vertical">vertical</option>
+                </select>
+              </label>
+            </div>
+          </details>
+
+          <!-- INTERACTION -->
+          <details>
+            <summary>Interaction</summary>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().draggable"
+                  (ngModelChange)="patch('draggable', $event)"
+                />
+                draggable
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().canSwipe"
+                  (ngModelChange)="patch('canSwipe', $event)"
+                />
+                canSwipe
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().slideOnClick"
+                  (ngModelChange)="patch('slideOnClick', $event)"
+                />
+                slideOnClick
+              </label>
+              <label
+                >dragThresholdRatio
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().dragThresholdRatio"
+                  (ngModelChange)="patch('dragThresholdRatio', +$event)"
+                />
+                <small>Drag threshold before snapping to another slide.</small>
+              </label>
+            </div>
+            <div class="pg-row">
+              <label
+                >mouseWheel
+                <select
+                  [ngModel]="state().mouseWheel"
+                  (ngModelChange)="patch('mouseWheel', $event)"
+                >
+                  <option value="off">off</option>
+                  <option value="on">on (both)</option>
+                  <option value="horizontal">horizontal only</option>
+                  <option value="vertical">vertical only</option>
+                  <option value="both">both (explicit)</option>
+                </select>
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-full"
+                >dragIgnoreSelector
+                <textarea
+                  rows="3"
+                  [ngModel]="state().dragIgnoreSelector"
+                  (ngModelChange)="patch('dragIgnoreSelector', $event)"
+                ></textarea>
+                <small
+                  >Selectors that keep inner buttons/links from starting a
+                  drag.</small
+                >
+              </label>
+            </div>
+          </details>
+
+          <!-- PAGINATION -->
+          <details>
+            <summary>Pagination</summary>
+            <div class="pg-row">
+              <label
+                >paginationMode
+                <select
+                  [ngModel]="state().paginationMode"
+                  (ngModelChange)="patch('paginationMode', $event)"
+                >
+                  <option value="none">none</option>
+                  <option value="number">number</option>
+                  <option value="dot">dot</option>
+                  <option value="dynamic_dot">dynamic_dot</option>
+                  <option value="fraction">fraction</option>
+                  <option value="progress">progress</option>
+                  <option value="scrollbar">scrollbar</option>
+                </select>
+              </label>
+              @if (
+                state().paginationMode === 'progress' ||
+                state().paginationMode === 'scrollbar'
+              ) {
+                <label
+                  >trackPosition
+                  <select
+                    [ngModel]="state().paginationProgressPosition"
+                    (ngModelChange)="patch('paginationProgressPosition', $event)"
+                  >
+                    <option value="bottom">bottom</option>
+                    <option value="top">top</option>
+                    <option value="left">left</option>
+                    <option value="right">right</option>
+                  </select>
+                  <small>Main placement for progress or scrollbar pagination.</small>
+                </label>
+              }
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().paginationClickable"
+                  (ngModelChange)="patch('paginationClickable', $event)"
+                />
+                clickable
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().paginationExternal"
+                  (ngModelChange)="patch('paginationExternal', $event)"
+                />
+                <span class="pg-toggle-copy">
+                  external
+                  <small
+                    >Renders pagination outside the carousel via linked
+                    component.</small
+                  >
+                </span>
+              </label>
+            </div>
+          </details>
+
+          <!-- AUTOPLAY -->
+          <details>
+            <summary>Autoplay</summary>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().autoplayEnabled"
+                  (ngModelChange)="patch('autoplayEnabled', $event)"
+                />
+                enabled
+              </label>
+              <label
+                >delay (ms)
+                <input
+                  type="number"
+                  min="100"
+                  step="100"
+                  [ngModel]="state().autoplayDelay"
+                  (ngModelChange)="patch('autoplayDelay', +$event)"
+                  [disabled]="!state().autoplayEnabled"
+                />
+              </label>
+            </div>
+            <fieldset [disabled]="!state().autoplayEnabled">
+              <div class="pg-row">
+                <label class="pg-toggle">
+                  <input
+                    type="checkbox"
+                    [ngModel]="state().autoplayPauseOnHover"
+                    (ngModelChange)="patch('autoplayPauseOnHover', $event)"
+                  />
+                  pauseOnHover
+                </label>
+                <label class="pg-toggle">
+                  <input
+                    type="checkbox"
+                    [ngModel]="state().autoplayPauseOnFocus"
+                    (ngModelChange)="patch('autoplayPauseOnFocus', $event)"
+                  />
+                  pauseOnFocus
+                </label>
+              </div>
+              <div class="pg-row">
+                <label class="pg-toggle">
+                  <input
+                    type="checkbox"
+                    [ngModel]="state().autoplayStopOnInteraction"
+                    (ngModelChange)="patch('autoplayStopOnInteraction', $event)"
+                  />
+                  stopOnInteraction
+                </label>
+                <label class="pg-toggle">
+                  <input
+                    type="checkbox"
+                    [ngModel]="state().autoplayDisableOnHidden"
+                    (ngModelChange)="patch('autoplayDisableOnHidden', $event)"
+                  />
+                  disableOnHidden
+                </label>
+              </div>
+              <div class="pg-row">
+                <label class="pg-toggle">
+                  <input
+                    type="checkbox"
+                    [ngModel]="state().autoplayResumeOnMouseLeave"
+                    (ngModelChange)="
+                      patch('autoplayResumeOnMouseLeave', $event)
+                    "
+                  />
+                  resumeOnMouseLeave
+                </label>
+              </div>
+            </fieldset>
+          </details>
+
+          <!-- BREAKPOINTS -->
+          <details>
+            <summary>Responsive breakpoints</summary>
+            <div class="pg-row">
+              <label class="pg-toggle pg-full">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().breakpointsEnabled"
+                  (ngModelChange)="patch('breakpointsEnabled', $event)"
+                />
+                Enable breakpoints (overrides slidesPerView & spaceBetween)
+              </label>
+            </div>
+            <fieldset [disabled]="!state().breakpointsEnabled">
+              <legend class="pg-legend">Mobile (≤ max-width)</legend>
+              <div class="pg-row">
+                <label
+                  >max-width (px)
+                  <input
+                    type="number"
+                    min="320"
+                    [ngModel]="state().bpMobileMaxWidth"
+                    (ngModelChange)="patch('bpMobileMaxWidth', +$event)"
+                  />
+                </label>
+                <label
+                  >slidesPerView
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    [ngModel]="state().bpMobileSlidesPerView"
+                    (ngModelChange)="patch('bpMobileSlidesPerView', +$event)"
+                  />
+                </label>
+              </div>
+              <div class="pg-row">
+                <label
+                  >spaceBetween
+                  <input
+                    type="number"
+                    min="0"
+                    [ngModel]="state().bpMobileSpaceBetween"
+                    (ngModelChange)="patch('bpMobileSpaceBetween', +$event)"
+                  />
+                </label>
+              </div>
+              <legend class="pg-legend">Tablet (mobile+1 → max-width)</legend>
+              <div class="pg-row">
+                <label
+                  >max-width (px)
+                  <input
+                    type="number"
+                    min="320"
+                    [ngModel]="state().bpTabletMaxWidth"
+                    (ngModelChange)="patch('bpTabletMaxWidth', +$event)"
+                  />
+                </label>
+                <label
+                  >slidesPerView
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    [ngModel]="state().bpTabletSlidesPerView"
+                    (ngModelChange)="patch('bpTabletSlidesPerView', +$event)"
+                  />
+                </label>
+              </div>
+              <div class="pg-row">
+                <label
+                  >spaceBetween
+                  <input
+                    type="number"
+                    min="0"
+                    [ngModel]="state().bpTabletSpaceBetween"
+                    (ngModelChange)="patch('bpTabletSpaceBetween', +$event)"
+                  />
+                </label>
+              </div>
+              <legend class="pg-legend">Desktop (tablet+1 →)</legend>
+              <div class="pg-row">
+                <label
+                  >slidesPerView
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    [ngModel]="state().bpDesktopSlidesPerView"
+                    (ngModelChange)="patch('bpDesktopSlidesPerView', +$event)"
+                  />
+                </label>
+                <label
+                  >spaceBetween
+                  <input
+                    type="number"
+                    min="0"
+                    [ngModel]="state().bpDesktopSpaceBetween"
+                    (ngModelChange)="patch('bpDesktopSpaceBetween', +$event)"
+                  />
+                </label>
+              </div>
+            </fieldset>
+          </details>
+
+          <!-- THUMBS -->
+          <details>
+            <summary>Thumbs (linked carousel)</summary>
+            <div class="pg-row">
+              <label class="pg-toggle pg-full">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().thumbsEnabled"
+                  (ngModelChange)="patch('thumbsEnabled', $event)"
+                />
+                Render a thumbnail carousel below the master
+              </label>
+            </div>
+            <fieldset [disabled]="!state().thumbsEnabled">
+              <div class="pg-row">
+                <label
+                  >thumbs slidesPerView
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    [ngModel]="state().thumbsSlidesPerView"
+                    (ngModelChange)="patch('thumbsSlidesPerView', +$event)"
+                  />
+                </label>
+                <label
+                  >thumbs spaceBetween
+                  <input
+                    type="number"
+                    min="0"
+                    [ngModel]="state().thumbsSpaceBetween"
+                    (ngModelChange)="patch('thumbsSpaceBetween', +$event)"
+                  />
+                </label>
+              </div>
+              <div class="pg-row">
+                <label class="pg-toggle">
+                  <input
+                    type="checkbox"
+                    [ngModel]="state().thumbsSelectionBar"
+                    (ngModelChange)="patch('thumbsSelectionBar', $event)"
+                  />
+                  selectionBar
+                </label>
+              </div>
+            </fieldset>
+          </details>
+
+          <!-- MISC -->
+          <details>
+            <summary>Misc & content</summary>
+            <div class="pg-row">
+              <label
+                >content mode
+                <select
+                  [ngModel]="state().contentMode"
+                  (ngModelChange)="patch('contentMode', $event)"
+                >
+                  <option value="image">image slides</option>
+                  <option value="projected">projected content</option>
+                </select>
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().lazyLoading"
+                  (ngModelChange)="patch('lazyLoading', $event)"
+                />
+                lazyLoading
+              </label>
+              <label class="pg-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="state().debug"
+                  (ngModelChange)="patch('debug', $event)"
+                />
+                debug (console)
+              </label>
+            </div>
+            <div class="pg-row">
+              <label class="pg-full"
+                >disabled indices (CSV)
+                <input
+                  type="text"
+                  placeholder="e.g. 2,5"
+                  [ngModel]="state().disabledIndices"
+                  (ngModelChange)="patch('disabledIndices', $event)"
+                />
+              </label>
+            </div>
+          </details>
+        </div>
+      }
+
+      <!-- ────────────── CSS TAB ────────────── -->
+      @if (tab() === "css") {
+        <div class="pg-controls">
+          <div class="pg-css-intro">
+            <strong>Live CSS customization</strong>
+            <span>
+              These controls map directly to public CSS variables. Override the
+              same variables on your carousel host to customize the library
+              without adding Angular inputs for purely visual choices.
+            </span>
+          </div>
+
+          <details open>
+            <summary>Root & slides</summary>
+            <div class="pg-css-vars pg-css-vars--controls">
+              <div class="pg-css-vars__head">
+                <strong>Root CSS variables</strong>
+                <span>safe visual layout only</span>
+              </div>
+              <label>
+                <code>--whirli-theme-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().themeColor"
+                  (ngModelChange)="patch('themeColor', $event)"
+                />
+                <span>{{ state().themeColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-overflow</code>
+                <select
+                  [ngModel]="state().carouselOverflow"
+                  (ngModelChange)="patch('carouselOverflow', $event)"
+                >
+                  <option value="hidden">hidden</option>
+                  <option value="visible">visible</option>
+                </select>
+                <span>{{ state().carouselOverflow }}</span>
+              </label>
+              <label>
+                <code>--whirli-gap-to-pagination</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="48"
+                  step="1"
+                  [ngModel]="state().carouselGapToPagination"
+                  (ngModelChange)="patch('carouselGapToPagination', +$event)"
+                />
+                <span>{{ state().carouselGapToPagination }}px</span>
+              </label>
+              <label>
+                <code>--whirli-slide-cursor</code>
+                <input
+                  type="text"
+                  [ngModel]="state().slideCursor"
+                  (ngModelChange)="patch('slideCursor', $event)"
+                />
+                <span>{{ state().slideCursor }}</span>
+              </label>
+              <label>
+                <code>--whirli-slide-disabled-opacity</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().slideDisabledOpacity"
+                  (ngModelChange)="patch('slideDisabledOpacity', +$event)"
+                />
+                <span>{{ state().slideDisabledOpacity }}</span>
+              </label>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Navigation</summary>
+            <div class="pg-css-vars pg-css-vars--controls">
+              <div class="pg-css-vars__head">
+                <strong>Navigation CSS variables</strong>
+                <span>position, shape and focus</span>
+              </div>
+              <label>
+                <code>--whirli-nav-inline-offset</code>
+                <input
+                  type="range"
+                  min="-80"
+                  max="80"
+                  step="1"
+                  [ngModel]="state().navInlineOffset"
+                  (ngModelChange)="patch('navInlineOffset', +$event)"
+                />
+                <span>{{ state().navInlineOffset }}px</span>
+              </label>
+              <label>
+                <code>--whirli-nav-block-offset</code>
+                <input
+                  type="range"
+                  min="-80"
+                  max="80"
+                  step="1"
+                  [ngModel]="state().navBlockOffset"
+                  (ngModelChange)="patch('navBlockOffset', +$event)"
+                />
+                <span>{{ state().navBlockOffset }}px</span>
+              </label>
+              <label>
+                <code>--whirli-nav-color</code>
+                <input
+                  type="text"
+                  [ngModel]="state().navColor"
+                  (ngModelChange)="patch('navColor', $event)"
+                />
+                <span>{{ state().navColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-nav-color-hover</code>
+                <input
+                  type="text"
+                  [ngModel]="state().navColorHover"
+                  (ngModelChange)="patch('navColorHover', $event)"
+                />
+                <span>{{ state().navColorHover }}</span>
+              </label>
+              <label>
+                <code>--whirli-nav-background</code>
+                <input
+                  type="text"
+                  [ngModel]="state().navBackground"
+                  (ngModelChange)="patch('navBackground', $event)"
+                />
+                <span>{{ state().navBackground }}</span>
+              </label>
+              <label>
+                <code>--whirli-nav-background-hover</code>
+                <input
+                  type="text"
+                  [ngModel]="state().navBackgroundHover"
+                  (ngModelChange)="patch('navBackgroundHover', $event)"
+                />
+                <span>{{ state().navBackgroundHover }}</span>
+              </label>
+              <label>
+                <code>--whirli-nav-border</code>
+                <input
+                  type="text"
+                  [ngModel]="state().navBorder"
+                  (ngModelChange)="patch('navBorder', $event)"
+                />
+                <span>{{ state().navBorder }}</span>
+              </label>
+              <label>
+                <code>--whirli-nav-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="48"
+                  step="1"
+                  [ngModel]="state().navRadius"
+                  (ngModelChange)="patch('navRadius', +$event)"
+                />
+                <span>{{ state().navRadius }}px</span>
+              </label>
+              <label>
+                <code>--whirli-nav-padding</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="24"
+                  step="1"
+                  [ngModel]="state().navPadding"
+                  (ngModelChange)="patch('navPadding', +$event)"
+                />
+                <span>{{ state().navPadding }}px</span>
+              </label>
+              <label>
+                <code>--whirli-nav-cursor</code>
+                <input
+                  type="text"
+                  [ngModel]="state().navCursor"
+                  (ngModelChange)="patch('navCursor', $event)"
+                />
+                <span>{{ state().navCursor }}</span>
+              </label>
+              <label>
+                <code>--whirli-nav-hidden-opacity</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().navHiddenOpacity"
+                  (ngModelChange)="patch('navHiddenOpacity', +$event)"
+                />
+                <span>{{ state().navHiddenOpacity }}</span>
+              </label>
+              <label>
+                <code>--whirli-focus-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().focusColor"
+                  (ngModelChange)="patch('focusColor', $event)"
+                />
+                <span>{{ state().focusColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-focus-width</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="8"
+                  step="1"
+                  [ngModel]="state().focusWidth"
+                  (ngModelChange)="patch('focusWidth', +$event)"
+                />
+                <span>{{ state().focusWidth }}px</span>
+              </label>
+              <label>
+                <code>--whirli-focus-offset</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="12"
+                  step="1"
+                  [ngModel]="state().focusOffset"
+                  (ngModelChange)="patch('focusOffset', +$event)"
+                />
+                <span>{{ state().focusOffset }}px</span>
+              </label>
+              <label>
+                <code>--whirli-nav-z-index</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  step="1"
+                  [ngModel]="state().navZIndex"
+                  (ngModelChange)="patch('navZIndex', +$event)"
+                />
+                <span>{{ state().navZIndex }}</span>
+              </label>
+            </div>
+          </details>
+
+          <details open>
+            <summary>Pagination</summary>
+            <div class="pg-css-vars pg-css-vars--controls">
+              <div class="pg-css-vars__head">
+                <strong>Pagination CSS variables</strong>
+                <span>layout, dots, fraction, progress and scrollbar</span>
+              </div>
+              <div class="pg-css-vars__section">Shared layout</div>
+              <label>
+                <code>--whirli-pagination-margin-bottom</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationMarginBottom"
+                  (ngModelChange)="patch('paginationMarginBottom', $event)"
+                />
+                <span>{{ state().paginationMarginBottom }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-color</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationColor"
+                  (ngModelChange)="patch('paginationColor', $event)"
+                />
+                <span>{{ state().paginationColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-gap</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="32"
+                  step="1"
+                  [ngModel]="state().paginationGap"
+                  (ngModelChange)="patch('paginationGap', +$event)"
+                />
+                <span>{{ state().paginationGap }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-padding</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="40"
+                  step="1"
+                  [ngModel]="state().paginationPadding"
+                  (ngModelChange)="patch('paginationPadding', +$event)"
+                />
+                <span>{{ state().paginationPadding }}px</span>
+              </label>
+              <div class="pg-css-vars__section">Dots and dynamic dots</div>
+              <label>
+                <code>--whirli-pagination-dot-size</code>
+                <input
+                  type="range"
+                  min="4"
+                  max="18"
+                  step="1"
+                  [ngModel]="state().paginationDotSize"
+                  (ngModelChange)="patch('paginationDotSize', +$event)"
+                />
+                <span>{{ state().paginationDotSize }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-width</code>
+                <input
+                  type="range"
+                  min="4"
+                  max="24"
+                  step="1"
+                  [ngModel]="state().paginationDotWidth"
+                  (ngModelChange)="patch('paginationDotWidth', +$event)"
+                />
+                <span>{{ state().paginationDotWidth }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-height</code>
+                <input
+                  type="range"
+                  min="4"
+                  max="24"
+                  step="1"
+                  [ngModel]="state().paginationDotHeight"
+                  (ngModelChange)="patch('paginationDotHeight', +$event)"
+                />
+                <span>{{ state().paginationDotHeight }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="999"
+                  step="1"
+                  [ngModel]="state().paginationDotRadius"
+                  (ngModelChange)="patch('paginationDotRadius', +$event)"
+                />
+                <span>{{ state().paginationDotRadius }}px</span>
+              </label>
+              <p>
+                Dot size applies to classic dot pagination. Dynamic dots keep a
+                fixed measured size to preserve their translate math.
+              </p>
+              <label>
+                <code>--whirli-pagination-dot-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().paginationDotColor"
+                  (ngModelChange)="patch('paginationDotColor', $event)"
+                />
+                <span>{{ state().paginationDotColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-active-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().paginationDotActiveColor"
+                  (ngModelChange)="patch('paginationDotActiveColor', $event)"
+                />
+                <span>{{ state().paginationDotActiveColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-opacity</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().paginationDotOpacity"
+                  (ngModelChange)="patch('paginationDotOpacity', +$event)"
+                />
+                <span>{{ state().paginationDotOpacity }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-active-opacity</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().paginationDotActiveOpacity"
+                  (ngModelChange)="patch('paginationDotActiveOpacity', +$event)"
+                />
+                <span>{{ state().paginationDotActiveOpacity }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-active-scale</code>
+                <input
+                  type="range"
+                  min="1"
+                  max="2.5"
+                  step="0.05"
+                  [ngModel]="state().paginationDotActiveScale"
+                  (ngModelChange)="patch('paginationDotActiveScale', +$event)"
+                />
+                <span>{{ state().paginationDotActiveScale }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-near-scale</code>
+                <input
+                  type="range"
+                  min="0.2"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().paginationDotNearScale"
+                  (ngModelChange)="patch('paginationDotNearScale', +$event)"
+                />
+                <span>{{ state().paginationDotNearScale }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-dot-far-scale</code>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="state().paginationDotFarScale"
+                  (ngModelChange)="patch('paginationDotFarScale', +$event)"
+                />
+                <span>{{ state().paginationDotFarScale }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-transition-duration</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="800"
+                  step="25"
+                  [ngModel]="state().paginationTransitionDuration"
+                  (ngModelChange)="patch('paginationTransitionDuration', +$event)"
+                />
+                <span>{{ state().paginationTransitionDuration }}ms</span>
+              </label>
+              <div class="pg-css-vars__section">Fraction</div>
+              <label>
+                <code>--whirli-pagination-fraction-background</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationFractionBackground"
+                  (ngModelChange)="patch('paginationFractionBackground', $event)"
+                />
+                <span>{{ state().paginationFractionBackground }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-fraction-border</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationFractionBorder"
+                  (ngModelChange)="patch('paginationFractionBorder', $event)"
+                />
+                <span>{{ state().paginationFractionBorder }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-fraction-color</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationFractionColor"
+                  (ngModelChange)="patch('paginationFractionColor', $event)"
+                />
+                <span>{{ state().paginationFractionColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-fraction-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="40"
+                  step="1"
+                  [ngModel]="state().paginationFractionRadius"
+                  (ngModelChange)="patch('paginationFractionRadius', +$event)"
+                />
+                <span>{{ state().paginationFractionRadius }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-fraction-padding</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="32"
+                  step="1"
+                  [ngModel]="state().paginationFractionPadding"
+                  (ngModelChange)="patch('paginationFractionPadding', +$event)"
+                />
+                <span>{{ state().paginationFractionPadding }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-fraction-font-size</code>
+                <input
+                  type="range"
+                  min="10"
+                  max="32"
+                  step="1"
+                  [ngModel]="state().paginationFractionFontSize"
+                  (ngModelChange)="patch('paginationFractionFontSize', +$event)"
+                />
+                <span>{{ state().paginationFractionFontSize }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-fraction-font-weight</code>
+                <input
+                  type="range"
+                  min="100"
+                  max="900"
+                  step="100"
+                  [ngModel]="state().paginationFractionFontWeight"
+                  (ngModelChange)="patch('paginationFractionFontWeight', +$event)"
+                />
+                <span>{{ state().paginationFractionFontWeight }}</span>
+              </label>
+              <div class="pg-css-vars__section">Progress</div>
+              <label>
+                <code>--whirli-pagination-progress-width</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationProgressWidth"
+                  (ngModelChange)="patch('paginationProgressWidth', $event)"
+                />
+                <span>{{ state().paginationProgressWidth }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-progress-height</code>
+                <input
+                  type="range"
+                  min="2"
+                  max="16"
+                  step="1"
+                  [ngModel]="state().paginationProgressHeight"
+                  (ngModelChange)="patch('paginationProgressHeight', +$event)"
+                />
+                <span>{{ state().paginationProgressHeight }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-progress-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().paginationProgressColor"
+                  (ngModelChange)="patch('paginationProgressColor', $event)"
+                />
+                <span>{{ state().paginationProgressColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-progress-background</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationProgressBackground"
+                  (ngModelChange)="patch('paginationProgressBackground', $event)"
+                />
+                <span>{{ state().paginationProgressBackground }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-progress-border</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationProgressBorder"
+                  (ngModelChange)="patch('paginationProgressBorder', $event)"
+                />
+                <span>{{ state().paginationProgressBorder }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-progress-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="999"
+                  step="1"
+                  [ngModel]="state().paginationProgressRadius"
+                  (ngModelChange)="patch('paginationProgressRadius', +$event)"
+                />
+                <span>{{ state().paginationProgressRadius }}px</span>
+              </label>
+              <div class="pg-css-vars__section">Scrollbar</div>
+              <label>
+                <code>--whirli-pagination-scrollbar-width</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationScrollbarWidth"
+                  (ngModelChange)="patch('paginationScrollbarWidth', $event)"
+                />
+                <span>{{ state().paginationScrollbarWidth }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-height</code>
+                <input
+                  type="range"
+                  min="2"
+                  max="20"
+                  step="1"
+                  [ngModel]="state().paginationScrollbarHeight"
+                  (ngModelChange)="patch('paginationScrollbarHeight', +$event)"
+                />
+                <span>{{ state().paginationScrollbarHeight }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-background</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationScrollbarBackground"
+                  (ngModelChange)="patch('paginationScrollbarBackground', $event)"
+                />
+                <span>{{ state().paginationScrollbarBackground }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-border</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationScrollbarBorder"
+                  (ngModelChange)="patch('paginationScrollbarBorder', $event)"
+                />
+                <span>{{ state().paginationScrollbarBorder }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="999"
+                  step="1"
+                  [ngModel]="state().paginationScrollbarRadius"
+                  (ngModelChange)="patch('paginationScrollbarRadius', +$event)"
+                />
+                <span>{{ state().paginationScrollbarRadius }}px</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-thumb-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().paginationScrollbarThumbColor"
+                  (ngModelChange)="patch('paginationScrollbarThumbColor', $event)"
+                />
+                <span>{{ state().paginationScrollbarThumbColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-thumb-border</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationScrollbarThumbBorder"
+                  (ngModelChange)="patch('paginationScrollbarThumbBorder', $event)"
+                />
+                <span>{{ state().paginationScrollbarThumbBorder }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-scrollbar-thumb-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="999"
+                  step="1"
+                  [ngModel]="state().paginationScrollbarThumbRadius"
+                  (ngModelChange)="patch('paginationScrollbarThumbRadius', +$event)"
+                />
+                <span>{{ state().paginationScrollbarThumbRadius }}px</span>
+              </label>
+              <div class="pg-css-vars__section">Placement</div>
+              <label>
+                <code>--whirli-pagination-host-width</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationHostWidth"
+                  (ngModelChange)="patch('paginationHostWidth', $event)"
+                />
+                <span>{{ state().paginationHostWidth }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-position</code>
+                <select
+                  [ngModel]="state().paginationPosition"
+                  (ngModelChange)="patch('paginationPosition', $event)"
+                >
+                  <option value="default">default/API</option>
+                  <option value="static">static</option>
+                  <option value="absolute">absolute</option>
+                </select>
+                <span>{{ state().paginationPosition }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-top</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationTop"
+                  (ngModelChange)="patch('paginationTop', $event)"
+                />
+                <span>{{ state().paginationTop }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-right</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationRight"
+                  (ngModelChange)="patch('paginationRight', $event)"
+                />
+                <span>{{ state().paginationRight }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-bottom</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationBottom"
+                  (ngModelChange)="patch('paginationBottom', $event)"
+                />
+                <span>{{ state().paginationBottom }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-left</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationLeft"
+                  (ngModelChange)="patch('paginationLeft', $event)"
+                />
+                <span>{{ state().paginationLeft }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-margin</code>
+                <input
+                  type="text"
+                  [ngModel]="state().paginationMargin"
+                  (ngModelChange)="patch('paginationMargin', $event)"
+                />
+                <span>{{ state().paginationMargin }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-align</code>
+                <select
+                  [ngModel]="state().paginationAlign"
+                  (ngModelChange)="patch('paginationAlign', $event)"
+                >
+                  <option value="flex-start">flex-start</option>
+                  <option value="center">center</option>
+                  <option value="flex-end">flex-end</option>
+                </select>
+                <span>{{ state().paginationAlign }}</span>
+              </label>
+              <label>
+                <code>--whirli-pagination-z-index</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  step="1"
+                  [ngModel]="state().paginationZIndex"
+                  (ngModelChange)="patch('paginationZIndex', +$event)"
+                />
+                <span>{{ state().paginationZIndex }}</span>
+              </label>
+            </div>
+          </details>
+
+          <details>
+            <summary>Thumbs</summary>
+            <div class="pg-css-vars pg-css-vars--controls">
+              <div class="pg-css-vars__head">
+                <strong>Thumb indicator CSS variables</strong>
+                <span>selection bar styling</span>
+              </div>
+              <label>
+                <code>--whirli-thumb-indicator-height</code>
+                <input
+                  type="range"
+                  min="1"
+                  max="12"
+                  step="1"
+                  [ngModel]="state().thumbIndicatorHeight"
+                  (ngModelChange)="patch('thumbIndicatorHeight', +$event)"
+                />
+                <span>{{ state().thumbIndicatorHeight }}px</span>
+              </label>
+              <label>
+                <code>--whirli-thumb-indicator-radius</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="999"
+                  step="1"
+                  [ngModel]="state().thumbIndicatorRadius"
+                  (ngModelChange)="patch('thumbIndicatorRadius', +$event)"
+                />
+                <span>{{ state().thumbIndicatorRadius }}px</span>
+              </label>
+              <label>
+                <code>--whirli-thumb-indicator-color</code>
+                <input
+                  type="color"
+                  [ngModel]="state().thumbIndicatorColor"
+                  (ngModelChange)="patch('thumbIndicatorColor', $event)"
+                />
+                <span>{{ state().thumbIndicatorColor }}</span>
+              </label>
+              <label>
+                <code>--whirli-thumb-indicator-bottom</code>
+                <input
+                  type="range"
+                  min="-16"
+                  max="16"
+                  step="1"
+                  [ngModel]="state().thumbIndicatorBottom"
+                  (ngModelChange)="patch('thumbIndicatorBottom', +$event)"
+                />
+                <span>{{ state().thumbIndicatorBottom }}px</span>
+              </label>
+              <label>
+                <code>--whirli-thumb-indicator-z-index</code>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  step="1"
+                  [ngModel]="state().thumbIndicatorZIndex"
+                  (ngModelChange)="patch('thumbIndicatorZIndex', +$event)"
+                />
+                <span>{{ state().thumbIndicatorZIndex }}</span>
+              </label>
+            </div>
+          </details>
+
+        </div>
+      }
+
+      <!-- ────────────── EVENTS TAB ────────────── -->
+      @if (tab() === "events") {
+        <div class="pg-events">
+          <div class="pg-events-toolbar">
+            <button (click)="resetEvents()">↻ Clear</button>
+            <span class="pg-events-hint"
+              >{{ events().length }} / {{ maxLogSize }} entries</span
+            >
+          </div>
+          <div class="pg-events-grid">
+            @for (e of eventList(); track e.name) {
+              <div class="pg-evt-card" [style.--c]="categoryColor[e.category]">
+                <div class="pg-evt-name">{{ e.name }}</div>
+                <div class="pg-evt-count">{{ e.count }}</div>
+                @if (e.last !== undefined) {
+                  <div class="pg-evt-last" [title]="e.last">
+                    last: {{ e.last }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <h3 class="pg-events-h">Live stream</h3>
+          <ul class="pg-events-stream">
+            @for (e of events(); track e.id) {
+              <li [style.--c]="categoryColor[e.category]">
+                <span class="pg-evt-dot"></span>
+                <span class="pg-evt-stream-name">{{ e.name }}</span>
+                @if (e.payload !== undefined) {
+                  <span class="pg-evt-stream-payload">{{ e.payload }}</span>
+                }
+                <span class="pg-evt-stream-t"
+                  >{{ e.t | number: "1.0-0" }}ms</span
+                >
+              </li>
+            } @empty {
+              <li class="pg-empty">
+                No events yet — interact with the carousel.
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- ────────────── STATE TAB ────────────── -->
+      @if (tab() === "state") {
+        <div class="pg-state">
+          <div class="pg-events-toolbar">
+            <label class="pg-toggle">
+              <input
+                type="checkbox"
+                [ngModel]="snapshotEnabled()"
+                (ngModelChange)="snapshotEnabled.set($event)"
+              />
+              Live update (250ms)
+            </label>
+            <button (click)="refreshSnapshot()">↻ Refresh</button>
+          </div>
+          <section class="pg-state-section">
+            <h3>Carousel state</h3>
+            <table class="pg-state-table">
+              <tbody>
+                @for (entry of runtimeStateEntries(); track entry.key) {
+                  <tr>
+                    <th>{{ entry.key }}</th>
+                    <td>
+                      <pre>{{ entry.value }}</pre>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </section>
+        </div>
+      }
+    </aside>
+  </div>
+
+  @if (didacticCodeVisible()) {
+    <div
+      class="pg-code-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Generated carousel code"
+    >
+      <button
+        type="button"
+        class="pg-code-drawer__backdrop"
+        aria-label="Close generated code"
+        (click)="didacticCodeVisible.set(false)"
+      ></button>
+      <section class="pg-code-panel">
+        <div class="pg-code-panel__head">
+          <div>
+            <strong>Generated code</strong>
+            <span>minimal Angular setup for the current carousel</span>
+          </div>
+          <div class="pg-code-panel__actions">
+            <button type="button" (click)="copyDidacticCode()">
+              {{ didacticCodeCopied() ? "Copied" : "Copy" }}
+            </button>
+            <button type="button" (click)="didacticCodeVisible.set(false)">
+              Close
+            </button>
+          </div>
+        </div>
+        <div class="pg-code-tabs" aria-label="Generated code tabs">
+          <button
+            type="button"
+            [class.active]="didacticCodeTab() === 'template'"
+            (click)="setDidacticCodeTab('template')"
+          >
+            Template
+          </button>
+          <button
+            type="button"
+            [class.active]="didacticCodeTab() === 'config'"
+            (click)="setDidacticCodeTab('config')"
+          >
+            Config TS
+          </button>
+          <button
+            type="button"
+            [class.active]="didacticCodeTab() === 'styles'"
+            (click)="setDidacticCodeTab('styles')"
+          >
+            CSS
+          </button>
+        </div>
+        <pre><code>{{ activeDidacticCode() }}</code></pre>
+      </section>
+    </div>
+  }
+</div>

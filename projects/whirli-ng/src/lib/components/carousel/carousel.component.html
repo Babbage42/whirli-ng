@@ -1,0 +1,133 @@
+<div [innerHTML]="generatedStyles"></div>
+
+<div
+  #carousel
+  class="carousel"
+  [class.layout-ready]="layoutReady()"
+  [class.carousel--center]="applyCenterAtInit()"
+  [class.carousel--vertical]="store.isVertical()"
+  [class.carousel--ssr-relative-peek]="usesSsrRelativePeekFallback()"
+  [style.--whirli-ssr-relative-peek-ratio]="ssrRelativePeekRatio()"
+  [style.--whirli-ssr-margin-start.px]="marginStart()"
+  [ngStyle]="peekPaddingStyle()"
+  [attr.dir]="direction()"
+  role="region"
+  aria-roledescription="carousel"
+  [attr.aria-label]="resolvedA11y().carouselLabel"
+  [attr.data-real-index]="store.currentRealPosition()"
+  [attr.data-perceived-index]="store.perceivedIndex()"
+  [class.carousel--rtl]="store.isRtl()"
+>
+  @if (debug()) {
+    <span>total slides:{{ totalSlides() }}</span>
+    <span>current anchor:{{ currentPosition() }}</span>
+    <span>real position:{{ currentRealPosition() }}</span>
+  }
+
+  <div class="slides-wrapper">
+    @if (showControls()) {
+      <whirli-navigation-ui
+        [alwaysShowControls]="alwaysShowControls()"
+        [customLeftArrow]="customLeftArrow()?.templateRef"
+        [customRightArrow]="customRightArrow()?.templateRef"
+        (slidePrev)="slideToPrev()"
+        (slideNext)="slideToNext()"
+        (slideTo)="slideTo($event)"
+        [loop]="loop()"
+        [rewind]="rewind()"
+        [currentPosition]="currentPosition()"
+        [totalSlides]="totalSlides()"
+        [iconSize]="iconSize()"
+        [previousSlideLabel]="resolvedA11y().previousSlideLabel"
+        [nextSlideLabel]="resolvedA11y().nextSlideLabel"
+      >
+      </whirli-navigation-ui>
+    }
+
+    <div
+      #allSlides
+      class="slides"
+      [class.slides--vertical]="store.isVertical()"
+      role="group"
+      [attr.aria-label]="resolvedA11y().slidesLabel"
+      aria-live="polite"
+      aria-atomic="false"
+      [class.slides-auto]="slidesPerView() === 'auto'"
+      [class.fix-subpixel]="fixSubPixelIssue()"
+      [class.force-centering]="forceCentering()"
+      [style.transform]="slidesTransform()"
+      [style.transition-duration.ms]="transitionDuration()"
+      [style.gap]="slidesGap()"
+      [style.grid-auto-columns]="store.isVertical() ? null : slidesGridSize()"
+      [style.grid-auto-rows]="store.isVertical() ? slidesGridSize() : null"
+      whirliImagesReady
+      (imagesReady)="onImagesReady()"
+      (imagesChanged)="onImagesChanged()"
+    >
+      @if (slides().length) {
+        @for (index of store.renderedIndices(); track $index) {
+          @let slideElement = slides()[index]; @let realIndex = index;
+          @if (slideElement) {
+            <div
+              #slide
+              class="slide"
+              [class.slide--disabled]="
+                navigationService.isSlideDisabled(realIndex)
+              "
+              [class.slide--active]="store.perceivedIndex() === realIndex"
+              [attr.data-testid]="'slide-' + realIndex"
+            >
+              <img class="slide__image" src="{{ slideElement.image }}" alt="" />
+
+              @if (debug()) {
+                <span>{{ realIndex + 1 }}</span>
+              }
+            </div>
+          }
+        }
+      } @else if (projectedSlides().length) {
+        @for (slide of projectedSlides(); track $index) {
+          <ng-container>
+            <div
+              #slide
+              class="slide position-{{ $index + 1 }}"
+              [class.slide--disabled]="
+                navigationService.isSlideDisabled($index)
+              "
+              [class.slide--active]="store.perceivedIndex() === $index"
+              [attr.data-testid]="'slide-' + $index"
+            >
+              <ng-container
+                *ngTemplateOutlet="slide.templateRef"
+              ></ng-container>
+            </div>
+          </ng-container>
+        }
+      } @else {
+        <ng-content></ng-content>
+      }
+    </div>
+
+    @if (thumbsFor() && store.thumbsOptions()?.selectionBar) {
+      <div
+        class="carousel-thumb-indicator"
+        [style.transform]="'translateX(' + thumbIndicatorLeft() + 'px)'"
+        [style.transition-duration.ms]="thumbsTransitionDuration()"
+        [style.width.px]="thumbIndicatorWidth()"
+      ></div>
+    }
+  </div>
+
+  @if (store.pagination() && !store.pagination()!.external) {
+    <ng-container *ngTemplateOutlet="paginationTemplate"></ng-container>
+  }
+</div>
+
+<ng-template #paginationTemplate>
+  @if (store.pagination()) {
+    <whirli-pagination-ui
+      class="carousel__pagination"
+      (goToSlide)="slideTo($event)"
+    ></whirli-pagination-ui>
+  }
+</ng-template>

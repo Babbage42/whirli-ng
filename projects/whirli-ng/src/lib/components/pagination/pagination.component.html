@@ -1,0 +1,97 @@
+@let pagination = store.pagination();
+
+@if (pagination) {
+  @if (pagination.type === "dot") {
+    <div
+      class="dot-pagination pagination-dot"
+      [class.clickable]="pagination.clickable"
+      [class.rtl]="store.isRtl()"
+    >
+      @for (num of range(); track $index) {
+        <button
+          type="button"
+          [attr.aria-label]="bulletLabel(num - 1)"
+          [attr.aria-current]="
+            currentPositionVisible() === num - 1 ? 'true' : null
+          "
+          [disabled]="!pagination.clickable"
+          (click)="pagination.clickable ? slideTo(num - 1) : null"
+          class="dot"
+          [class.selected]="currentPositionVisible() === num - 1"
+        ></button>
+      }
+    </div>
+  } @else if (
+    store.totalSlidesVisible() > 1 && pagination.type === "dynamic_dot"
+  ) {
+    <div
+      class="dot-pagination dynamic"
+      [style.width.px]="!store.isVertical() ? maxSpan() : null"
+      [style.height.px]="store.isVertical() ? maxSpan() : null"
+      [class.clickable]="pagination.clickable"
+    >
+      @for (num of range(); track $index) {
+        <button
+          type="button"
+          [attr.aria-label]="bulletLabel(num - 1)"
+          [attr.aria-current]="
+            currentPositionVisible() === num - 1 ? 'true' : null
+          "
+          [disabled]="!pagination.clickable"
+          (click)="pagination.clickable ? slideTo(num - 1) : null"
+          class="dot"
+          [style.left.px]="!store.isVertical() ? dotMainOffset() : null"
+          [style.top.px]="store.isVertical() ? dotMainOffset() : null"
+          [class.selected]="currentPositionVisible() === num - 1"
+          [class.next]="currentPositionVisible() === num - 2"
+          [class.next-next]="currentPositionVisible() === num - 3"
+          [class.prev]="currentPositionVisible() === num"
+          [class.prev-prev]="currentPositionVisible() === num + 1"
+        ></button>
+      }
+    </div>
+  } @else if (pagination.type === "fraction") {
+    <div class="pagination-fraction">
+      <span>{{ store.perceivedIndex() + 1 }} / {{ store.totalSlides() }}</span>
+    </div>
+  } @else if (pagination.type === "progress") {
+    <div
+      class="pagination-progress"
+      role="progressbar"
+      aria-label="Carousel progress"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="progressPercent() | number: '1.0-0'"
+      [style.--whirli-pagination-progress-value]="progressPercent() + '%'"
+    >
+      <span></span>
+    </div>
+  } @else if (pagination.type === "scrollbar") {
+    <div
+      class="pagination-scrollbar"
+      [class.clickable]="pagination.clickable"
+      role="scrollbar"
+      aria-label="Carousel scrollbar"
+      aria-valuemin="1"
+      [attr.aria-valuemax]="store.totalSlidesVisible()"
+      [attr.aria-valuenow]="currentPositionVisible() + 1"
+      [attr.aria-readonly]="pagination.clickable ? null : 'true'"
+      [attr.tabindex]="pagination.clickable ? 0 : null"
+      [attr.aria-orientation]="isTrackVertical() ? 'vertical' : 'horizontal'"
+      (pointerdown)="onScrollbarPointerDown($event)"
+      (pointermove)="onScrollbarPointerMove($event)"
+      (pointerup)="onScrollbarPointerEnd($event)"
+      (pointercancel)="onScrollbarPointerEnd($event)"
+      (keydown)="onScrollbarKeydown($event)"
+    >
+      <span
+        [style.--whirli-pagination-scrollbar-thumb-size]="
+          scrollbarThumbPercent() + '%'
+        "
+        [style.--whirli-pagination-scrollbar-thumb-offset]="
+          scrollbarThumbOffsetPercent() + '%'
+        "
+      ></span>
+    </div>
+  }
+}

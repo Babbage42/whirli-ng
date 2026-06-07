@@ -1,0 +1,67 @@
+name: Build & Publish Storybook to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # - name: Build library
+      #   run: npx ng build whirli-ng
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Build Playground
+        run: npm run build:playground:pages
+
+      - name: Attach Playground to Pages artifact
+        run: |
+          rm -rf storybook-static/playground
+          mkdir -p storybook-static/playground
+          cp -R dist/whirli-playground/browser/. storybook-static/playground/
+          if [ -f storybook-static/playground/index.csr.html ]; then
+            cp storybook-static/playground/index.csr.html storybook-static/playground/index.html
+          fi
+          test -f storybook-static/playground/index.html
+          perl -0pi -e 's#<base href="/">#<base href="./">#' storybook-static/playground/index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./storybook-static
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
