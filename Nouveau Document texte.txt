@@ -1,2 +1,0 @@
-ng run whirli-ng:storybook 
-ng build whirli-ng --watch
