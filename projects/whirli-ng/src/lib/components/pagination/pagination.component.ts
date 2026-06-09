@@ -6,7 +6,7 @@ import {
   ElementRef,
   inject,
   signal,
-  output,
+  output
 } from '@angular/core';
 import { CarouselStore } from '../../carousel.store';
 

@@ -6,7 +6,7 @@ import {
   input,
   output,
   TemplateRef,
-  viewChild,
+  viewChild
 } from '@angular/core';
 import { CarouselRegistryService } from '../carousel/carousel-registry.service';
 import { CarouselStore } from '../../carousel.store';
