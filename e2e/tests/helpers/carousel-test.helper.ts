@@ -369,7 +369,13 @@ export async function clickNext(
       return { clicked, blocked: true };
     }
 
-    await button.click();
+    const clickedButton = await button
+      .click({ timeout: timeout + 400 })
+      .then(() => true)
+      .catch(() => false);
+    if (!clickedButton) {
+      return { clicked, blocked: true };
+    }
     clicked++;
 
     if (i < times - 1) {
@@ -400,7 +406,13 @@ export async function clickPrev(
       return { clicked, blocked: true };
     }
 
-    await button.click();
+    const clickedButton = await button
+      .click({ timeout: timeout + 400 })
+      .then(() => true)
+      .catch(() => false);
+    if (!clickedButton) {
+      return { clicked, blocked: true };
+    }
     clicked++;
 
     if (i < times - 1) {
@@ -493,12 +505,14 @@ export async function clickNextUntilStop(
   mode: CarouselMode = {},
 ) {
   let prev = await getActiveSlideIndex(carousel);
+  const timeout = getTimeout(mode);
 
   for (let i = 0; i < maxSteps; i++) {
     const res = await clickNext(carousel, 1, mode);
     if (res.blocked) {
       return { stoppedAt: prev, steps: i };
     }
+    await carousel.page().waitForTimeout(timeout / 2);
     const cur = await getActiveSlideIndex(carousel);
     if (cur === prev) return { stoppedAt: cur, steps: i + 1 };
     prev = cur;
@@ -512,12 +526,14 @@ export async function clickPrevUntilStop(
   mode: CarouselMode = {},
 ) {
   let prev = await getActiveSlideIndex(carousel);
+  const timeout = getTimeout(mode);
 
   for (let i = 0; i < maxSteps; i++) {
     const res = await clickPrev(carousel, 1, mode);
     if (res.blocked) {
       return { stoppedAt: prev, steps: i };
     }
+    await carousel.page().waitForTimeout(timeout / 2);
     const cur = await getActiveSlideIndex(carousel);
     if (cur === prev) return { stoppedAt: cur, steps: i + 1 };
     prev = cur;
