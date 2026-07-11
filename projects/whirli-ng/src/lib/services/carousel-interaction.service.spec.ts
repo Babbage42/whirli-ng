@@ -118,14 +118,12 @@ describe('CarouselInteractionService', () => {
     expect(view.clickOnSlide).toHaveBeenCalledWith(syntheticClick);
   });
 
-  it('does not treat the click following a touch drag as a tap', () => {
+  it('does not leave native click suppression armed after a touch drag', () => {
     service.handleStart(touch('touchstart', 120, 40));
     service.handleMove(touch('touchmove', 90, 40));
     service.handleEnd(touch('touchend', 90, 40));
 
-    service.handleClick(mouse('click', 90, 40));
-
-    expect(view.clickOnSlide).not.toHaveBeenCalled();
+    expect(service.consumeSuppressNextNativeClick()).toBe(false);
   });
 
   it('ignores document releases when no carousel gesture is active', () => {

@@ -31,6 +31,20 @@ async function dispatchTouchSwipe(
   await session.detach();
 }
 
+async function overscrollAtStart(page: Page) {
+  const carousel = firstCarousel(page);
+  const box = await carousel.boundingBox();
+  expect(box).not.toBeNull();
+
+  const y = box!.y + box!.height / 2;
+  await dispatchTouchSwipe(
+    page,
+    { x: box!.x + box!.width * 0.25, y },
+    { x: box!.x + box!.width * 0.75, y },
+  );
+  await page.waitForTimeout(500);
+}
+
 test.describe('Real touch interactions', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(story('whirli-carousel--partial-slides-per-view'));
@@ -184,5 +198,41 @@ test.describe('Real touch interactions', () => {
             .__nativeImageDragCount,
       ),
     ).toBe(0);
+  });
+
+  test('the first slide tap works after releasing start-edge resistance', async ({
+    page,
+  }) => {
+    await page.goto(story('whirli-carousel--exact-slides-per-view'));
+    await waitCarouselReady(page);
+    const carousel = firstCarousel(page);
+
+    await overscrollAtStart(page);
+    expect(await getActiveSlideIndex(carousel)).toBe(0);
+
+    const fourthSlide = carousel.locator('[data-testid="slide-3"]');
+    const box = await fourthSlide.boundingBox();
+    expect(box).not.toBeNull();
+    await page.touchscreen.tap(
+      box!.x + box!.width * 0.2,
+      box!.y + box!.height / 2,
+    );
+
+    await expect.poll(() => getActiveSlideIndex(carousel)).toBe(3);
+  });
+
+  test('the first Next tap works after releasing start-edge resistance', async ({
+    page,
+  }) => {
+    await page.goto(story('whirli-carousel--exact-slides-per-view'));
+    await waitCarouselReady(page);
+    const carousel = firstCarousel(page);
+
+    await overscrollAtStart(page);
+    expect(await getActiveSlideIndex(carousel)).toBe(0);
+
+    await carousel.getByRole('button', { name: 'Next slide' }).tap();
+
+    await expect.poll(() => getActiveSlideIndex(carousel)).not.toBe(0);
   });
 });
