@@ -15,6 +15,8 @@
     "test:e2e:ssr": "playwright test -c e2e/playwright.ssr.config.ts",
     "storybook": "ng run whirli-ng:storybook",
     "build-storybook": "ng run whirli-ng:build-storybook",
+    "release:prepare": "node scripts/release/prepare-release.mjs",
+    "release:github": "node scripts/release/publish-github-release.mjs",
     "prepare": "husky",
     "test:e2e": "npm run build-storybook && playwright test -c e2e/playwright.config.ts && playwright test -c e2e/playwright.mobile.config.ts"
   },
