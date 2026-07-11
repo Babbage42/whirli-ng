@@ -315,13 +315,12 @@ export class CarouselInteractionService {
   public handleStart(event: MouseEvent | TouchEvent) {
     // If this start should trigger a drag (not on a dragIgnoreSelector
     // target), prevent the browser's native drag of <img>/<a> children
-    if (this.shouldStartDrag(event) && event.cancelable !== false) {
-      // touchstart with passive listeners can't preventDefault
-      try {
-        event.preventDefault();
-      } catch {
-        /* noop */
-      }
+    if (
+      event instanceof MouseEvent &&
+      this.shouldStartDrag(event) &&
+      event.cancelable !== false
+    ) {
+      event.preventDefault();
     }
 
     const position = getPointerPosition(event);
