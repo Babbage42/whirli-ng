@@ -16,7 +16,7 @@
     "storybook": "ng run whirli-ng:storybook",
     "build-storybook": "ng run whirli-ng:build-storybook",
     "prepare": "husky",
-    "test:e2e": "npm run build-storybook && playwright test -c e2e/playwright.config.ts"
+    "test:e2e": "npm run build-storybook && playwright test -c e2e/playwright.config.ts && playwright test -c e2e/playwright.mobile.config.ts"
   },
   "private": true,
   "engines": {

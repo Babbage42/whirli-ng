@@ -31,9 +31,15 @@ describe('CarouselInteractionService', () => {
         CarouselInteractionService,
         CarouselStore,
         { provide: CarouselPhysicsService, useValue: {} },
-        { provide: CarouselLoopService, useValue: {} },
+        {
+          provide: CarouselLoopService,
+          useValue: { insertLoopSlidesByTranslation: jest.fn() },
+        },
         { provide: CarouselDomService, useValue: { updateSlides: jest.fn() } },
-        { provide: CarouselVirtualService, useValue: {} },
+        {
+          provide: CarouselVirtualService,
+          useValue: { syncVirtualSlides: jest.fn() },
+        },
         { provide: CAROUSEL_VIEW, useValue: view },
       ],
     });
@@ -61,6 +67,23 @@ describe('CarouselInteractionService', () => {
     return event;
   }
 
+  function touch(type: string, x: number, y = 0, target?: EventTarget) {
+    const point = { pageX: x, pageY: y };
+    const event = new TouchEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      touches: type === 'touchend' ? [] : ([point] as unknown as Touch[]),
+      changedTouches: [point] as unknown as Touch[],
+    });
+    if (target) {
+      Object.defineProperty(event, 'target', {
+        configurable: true,
+        value: target,
+      });
+    }
+    return event;
+  }
+
   it('arms a one-shot native click suppression after a real drag', () => {
     service.handleStart(mouse('mousedown', 0));
     service.handleEnd(mouse('mouseup', -20));
@@ -75,6 +98,34 @@ describe('CarouselInteractionService', () => {
     service.handleEnd(mouse('mouseup', 1));
 
     expect(service.consumeSuppressNextNativeClick()).toBe(false);
+  });
+
+  it('lets a touch tap produce its native compatibility click', () => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    const image = document.createElement('img');
+    slide.appendChild(image);
+
+    const touchStart = touch('touchstart', 120, 40, image);
+    service.handleStart(touchStart);
+    const touchEnd = touch('touchend', 121, 41, image);
+    service.handleEnd(touchEnd);
+
+    expect(touchStart.defaultPrevented).toBe(false);
+    const syntheticClick = mouse('click', 121, 41, image);
+    service.handleClick(syntheticClick);
+
+    expect(view.clickOnSlide).toHaveBeenCalledWith(syntheticClick);
+  });
+
+  it('does not treat the click following a touch drag as a tap', () => {
+    service.handleStart(touch('touchstart', 120, 40));
+    service.handleMove(touch('touchmove', 90, 40));
+    service.handleEnd(touch('touchend', 90, 40));
+
+    service.handleClick(mouse('click', 90, 40));
+
+    expect(view.clickOnSlide).not.toHaveBeenCalled();
   });
 
   it('ignores document releases when no carousel gesture is active', () => {

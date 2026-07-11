@@ -5,10 +5,7 @@ const STORYBOOK_URL = `http://localhost:${STORYBOOK_PORT}`;
 
 export default defineConfig({
   testDir: './tests',
-  testIgnore: [
-    /playground-ssr-cls\.spec\.ts/,
-    /carousel-mobile\.spec\.ts/,
-  ],
+  testMatch: /carousel-mobile\.spec\.ts/,
   timeout: 30_000,
   expect: {
     timeout: 5_000,
@@ -23,8 +20,8 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'mobile-chromium',
+      use: { ...devices['Pixel 5'] },
     },
   ],
   webServer: {
