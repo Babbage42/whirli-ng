@@ -379,7 +379,7 @@ export class CarouselInteractionService {
       return false;
     }
 
-    if (this.store.draggable()) {
+    if (this.store.draggable() && event instanceof MouseEvent) {
       this.suppressNextNativeClick = true;
     }
 
